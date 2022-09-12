@@ -1,0 +1,8 @@
+[package]
+name    = "lrinser_laser_etcher"
+version = "0.2.0"
+authors = ["Totobird Creations"]
+edition = "2021"
+
+[dependencies]
+image = "0.23.14"
