@@ -12,12 +12,12 @@ impl RenderNode {
             position  : [0.0, 0.0]
         };
     }
-    fn new_split(&mut self, right_half : bool, top_half : bool) -> RenderNode {
+    fn new_split(&self, horizontal : f32, vertical : f32) -> RenderNode {
         let mut new = RenderNode::new();
         new.iteration = self.iteration + 1;
         new.position  = [
-            self.position[0] + get_pixel_size(self.iteration + 1) * (right_half as i32 as f32),
-            self.position[1] + get_pixel_size(self.iteration + 1) * (top_half   as i32 as f32)
+            self.position[0] + get_pixel_size(self.iteration) * horizontal,
+            self.position[1] + get_pixel_size(self.iteration) * vertical
         ];
         return new;
     }
@@ -25,10 +25,10 @@ impl RenderNode {
         match (self.split) {
             RenderSplitOption::Wait => {
                 self.split = RenderSplitOption::Continue(RenderSplit {
-                    tl: Box::new(self.new_split(false, true)),
-                    tr: Box::new(self.new_split(true, true)),
-                    bl: Box::new(self.new_split(false, false)),
-                    br: Box::new(self.new_split(true, false))
+                    tl: Box::new(self.new_split(0.5, 0.0)),
+                    tr: Box::new(self.new_split(0.5, 0.5)),
+                    bl: Box::new(self.new_split(0.0, 0.0)),
+                    br: Box::new(self.new_split(0.0, 0.5))
                 });
             }
             RenderSplitOption::Stop => (),
@@ -43,10 +43,9 @@ impl RenderNode {
     pub fn check(&mut self) {
         match (self.split) {
             RenderSplitOption::Wait => {
-                // TODO : Fix positioning.
-                if (self.position[0] > 0.25) {
+                /*if (self.position[0] > 0.75) {
                     self.split = RenderSplitOption::Stop;
-                }
+                }*/
             },
             RenderSplitOption::Stop => {},
             RenderSplitOption::Continue(ref mut split) => {
@@ -57,31 +56,19 @@ impl RenderNode {
             }
         };
     }
-    pub fn get_pixel(&self, position : [f32; 2]) -> u8 {
-        if (self.iteration == 3) {
-            println!("{:?}", position);
-        }
+    pub fn get_pixel(&self, position : [f32; 2]) -> [u8; 3] {
         return match (&self.split) {
-            RenderSplitOption::Wait => 255,
-            RenderSplitOption::Stop => 127,
+            RenderSplitOption::Wait => [(self.position[0] * 255.0) as u8, (self.position[1] * 255.0) as u8, 0],
+            RenderSplitOption::Stop => [255, 255, 255],
             RenderSplitOption::Continue(ref split) => {
                 let center_pos = [
-                    self.position[0] + get_pixel_size(self.iteration) / 2.0,
-                    self.position[1] + get_pixel_size(self.iteration) / 2.0
+                    self.position[0] + get_pixel_size(self.iteration + 1),
+                    self.position[1] + get_pixel_size(self.iteration + 1)
                 ];
-                if (position[0] < center_pos[0]) {
-                    if (position[1] < center_pos[1]) {
-                        split.bl.get_pixel(position)
-                    } else {
-                        split.tl.get_pixel([position[0], center_pos[1]])
-                    }
-                } else {
-                    if (position[1] < center_pos[1]) {
-                        split.br.get_pixel([center_pos[0], position[1]])
-                    } else {
-                        split.tr.get_pixel(center_pos)
-                    }
-                }
+                [split.bl.clone(), split.tl.clone(), split.br.clone(), split.tr.clone()][
+                    if (position[0] < center_pos[0]) {0} else {1} +
+                    if (position[1] < center_pos[1]) {0} else {2}
+                ].get_pixel(position)
             }
         };
     }

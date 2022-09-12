@@ -16,7 +16,7 @@ fn main() {
     println!("{}", tree.to_string());
     let settings = RenderSettings {
         frame: [-10.0, -10.0, 10.0, 10.0],
-        iterations: 3,
+        iterations: 5,
         resolution: [0, 0],
         target: String::from("target.png"),
     };

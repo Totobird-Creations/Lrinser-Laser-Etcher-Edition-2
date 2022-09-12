@@ -12,18 +12,16 @@ pub fn render(_node : Node, settings : RenderSettings) {
     let mut buffer     = ImageBuffer::new(resolution[0], resolution[1]);
 
     let render_node_tree = generate_render_node_tree(&settings);
-    println!("{:?}", render_node_tree);
 
     // Write pixels.
     for (pixel_x, pixel_y_reversed, pixel) in buffer.enumerate_pixels_mut() {
-        let pixel_y = resolution[1] - pixel_y_reversed;
+        let pixel_y = resolution[1] - (pixel_y_reversed + 1);
+        let rgb     = render_node_tree.get_pixel([
+            (pixel_x as f32) / (resolution[0] as f32),
+            (pixel_y as f32) / (resolution[1] as f32)
+        ]);
         *pixel = image::Rgba([
-            render_node_tree.get_pixel([
-                (pixel_x as f32) / (resolution[0] as f32),
-                (pixel_y as f32) / (resolution[1] as f32)
-            ]),
-            0u8,
-            0u8,
+            rgb[0], rgb[1], rgb[2],
             255u8
         ]);
     }
@@ -55,6 +53,5 @@ fn generate_render_node_tree(settings : &RenderSettings) -> RenderNode {
         render_node_tree.check();
         render_node_tree.split();
     }
-    render_node_tree.check();
     return render_node_tree;
 }
