@@ -1,4 +1,5 @@
 use crate::parse::node::EvaluatedValues;
+use super::settings::RenderSettings;
 
 
 #[derive(Clone, Debug)]
@@ -43,30 +44,35 @@ impl RenderNode {
             }
         };
     }
-    pub fn check(&mut self, column_values : &Vec<EvaluatedValues>) {
+    pub fn check(&mut self, settings : &RenderSettings, column_values : &Vec<EvaluatedValues>) {
         match (self.split) {
             RenderSplitOption::Wait => {
-                let left_index  = (self.position[0] * (column_values.len() - 1) as f32) as usize;
-                let left_values = column_values[left_index].get_values();
-                println!("{:?}", left_values);
+                let left_index     = (self.position[0] * (column_values.len() - 1) as f32) as usize;
+                let right_index    = (self.position[0] * (column_values.len() - 1) as f32) as usize + 1;
+                let bottom_value   = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
+                let top_value      = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
                 let mut passed = false;
-                for i in 0..left_values.len() {
-                    if (left_values[i] <= -1.5) {
-                        passed = true;
-                        break;
+                for left_value in column_values[left_index].get_values() {
+                    for right_value in column_values[right_index].get_values() {
+                        if (left_value >= &bottom_value && left_value < &top_value) ||
+                            (right_value >= &bottom_value && right_value < &top_value)
+                        {
+                            passed = true;
+                            break;
+                        }
                     }
+                    if (passed) {break;}
                 }
                 if (! passed) {
                     self.split = RenderSplitOption::Stop;
                 }
-                
             },
-            RenderSplitOption::Stop => {},
+            RenderSplitOption::Stop => (),
             RenderSplitOption::Continue(ref mut split) => {
-                split.bl.check(column_values);
-                split.tl.check(column_values);
-                split.br.check(column_values);
-                split.tr.check(column_values);
+                split.bl.check(settings, column_values);
+                split.tl.check(settings, column_values);
+                split.br.check(settings, column_values);
+                split.tr.check(settings, column_values);
             }
         };
     }

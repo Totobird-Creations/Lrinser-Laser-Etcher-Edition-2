@@ -66,7 +66,7 @@ fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], no
 fn generate_render_node_tree(settings : &RenderSettings, column_values : &Vec<EvaluatedValues>) -> RenderNode {
     let mut render_node_tree = RenderNode::new();
     for _i in 0..settings.iterations + 1 {
-        render_node_tree.check(column_values);
+        render_node_tree.check(settings, column_values);
         render_node_tree.split();
     }
     return render_node_tree;
