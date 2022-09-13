@@ -4,20 +4,22 @@ use super::settings::RenderSettings;
 
 #[derive(Clone, Debug)]
 pub struct RenderNode {
-    split     : RenderSplitOption,
-    iteration : u32,
-    position  : [f32; 2]
+    split      : RenderSplitOption,
+    iteration  : u32,
+    position   : [f32; 2],
+    iterations : u32
 }
 impl RenderNode {
-    pub fn new() -> RenderNode {
+    pub fn new(iterations : u32) -> RenderNode {
         return RenderNode {
-            split     : RenderSplitOption::Wait,
-            iteration : 0,
-            position  : [0.0, 0.0]
+            split      : RenderSplitOption::Wait,
+            iteration  : 0,
+            position   : [0.0, 0.0],
+            iterations : iterations
         };
     }
     fn new_split(&self, offset_mult : [f32; 2]) -> RenderNode {
-        let mut new = RenderNode::new();
+        let mut new = RenderNode::new(self.iterations);
         new.iteration = self.iteration + 1;
         new.position  = [
             self.position[0] + get_pixel_size(self.iteration) * offset_mult[0],
@@ -47,21 +49,20 @@ impl RenderNode {
     pub fn check(&mut self, settings : &RenderSettings, column_values : &Vec<EvaluatedValues>) {
         match (self.split) {
             RenderSplitOption::Wait => {
-                let left_index     = (self.position[0] * (column_values.len() - 1) as f32) as usize;
-                let right_index    = (self.position[0] * (column_values.len() - 1) as f32) as usize + 1;
-                let bottom_value   = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
-                let top_value      = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
+                let left_index   = (self.position[0] * (column_values.len() as f32 - 1.0)) as usize;
+                let right_index  = left_index + 1;
+                // Get Y coord at top and bottom of split.
+                let bottom_value = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
+                let top_value    = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
+                // Collect all values on the left and right edge.
+                let mut values = column_values[left_index].get_values().clone();
+                values.append(&mut column_values[right_index].get_values().clone());
                 let mut passed = false;
-                for left_value in column_values[left_index].get_values() {
-                    for right_value in column_values[right_index].get_values() {
-                        if (left_value >= &bottom_value && left_value < &top_value) ||
-                            (right_value >= &bottom_value && right_value < &top_value)
-                        {
-                            passed = true;
-                            break;
-                        }
+                for value in values {
+                    if (value >= bottom_value && value < top_value) {
+                        passed = true;
+                        break;
                     }
-                    if (passed) {break;}
                 }
                 if (! passed) {
                     self.split = RenderSplitOption::Stop;
@@ -78,8 +79,11 @@ impl RenderNode {
     }
     pub fn get_pixel(&self, position : [f32; 2]) -> [u8; 3] {
         return match (&self.split) {
-            RenderSplitOption::Wait => [(self.position[0] * 255.0) as u8, (self.position[1] * 255.0) as u8, 0],
-            RenderSplitOption::Stop => [255, 255, 255],
+            RenderSplitOption::Wait => [255, 0, 0],
+            RenderSplitOption::Stop => {
+                let i = ((self.iteration as f64 / self.iterations as f64) * 255.0) as u8;
+                [i, i, i]
+            },
             RenderSplitOption::Continue(ref split) => {
                 let center_pos = [
                     self.position[0] + get_pixel_size(self.iteration + 1),

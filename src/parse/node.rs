@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::render::settings::RenderSettings;
+
 
 #[derive(Debug)]
 pub struct Node {
@@ -142,6 +144,16 @@ impl EvaluatedValues {
     }
     pub fn get_values(&self) -> &Vec<f64> {
         return &self.values;
+    }
+    pub fn compress(&self, settings : &RenderSettings) -> EvaluatedValues {
+        let mut new_values = EvaluatedValues::new();
+        for i in 0..self.values.len() {
+            let value = self.values[i];
+            if (value >= settings.frame[1] && value < settings.frame[3]) {
+                new_values.values.push(value);
+            }
+        }
+        return new_values;
     }
 
     pub fn addition(&self, other : EvaluatedValues) -> EvaluatedValues {

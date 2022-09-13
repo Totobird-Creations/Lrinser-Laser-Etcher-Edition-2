@@ -6,7 +6,7 @@ pub mod render;
 use render::{render, settings::RenderSettings};
 
 fn main() {
-    let tree = *Node::new(NodeBase::AdditionOperation(
+    /*let tree = *Node::new(NodeBase::AdditionOperation(
         Node::new(NodeBase::MultiValue(vec![
             Node::new(NodeBase::Number(-3.0)),
             Node::new(NodeBase::SinFunction(
@@ -20,12 +20,26 @@ fn main() {
             Node::new(NodeBase::Variable(String::from("x"))),
             Node::new(NodeBase::Number(2.0))
         ))
+    ));*/
+    /*let tree = *Node::new(NodeBase::AdditionOperation(
+        Node::new(NodeBase::SinFunction(
+            Node::new(NodeBase::Variable(String::from("x")))
+        )),
+        Node::new(NodeBase::Number(0.5))
+    ));*/
+    let tree = *Node::new(NodeBase::AdditionOperation(
+        Node::new(NodeBase::Number(-2.0)),
+        Node::new(NodeBase::DivisionOperation(
+            Node::new(NodeBase::SinFunction(
+                Node::new(NodeBase::Variable(String::from("x")))
+            )),
+            Node::new(NodeBase::Number(4.0))
+        ))
     ));
-    println!("{}", tree.to_string());
 
     let settings = RenderSettings {
         frame: [-5.0, -5.0, 5.0, 5.0],
-        iterations: 5,
+        iterations: 7,
         resolution: [0, 0],
         target: String::from("target.png"),
     };
