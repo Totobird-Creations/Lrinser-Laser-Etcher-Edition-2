@@ -1,3 +1,6 @@
+use crate::parse::node::EvaluatedValues;
+
+
 #[derive(Clone, Debug)]
 pub struct RenderNode {
     split     : RenderSplitOption,
@@ -12,12 +15,12 @@ impl RenderNode {
             position  : [0.0, 0.0]
         };
     }
-    fn new_split(&self, horizontal : f32, vertical : f32) -> RenderNode {
+    fn new_split(&self, offset_mult : [f32; 2]) -> RenderNode {
         let mut new = RenderNode::new();
         new.iteration = self.iteration + 1;
         new.position  = [
-            self.position[0] + get_pixel_size(self.iteration) * horizontal,
-            self.position[1] + get_pixel_size(self.iteration) * vertical
+            self.position[0] + get_pixel_size(self.iteration) * offset_mult[0],
+            self.position[1] + get_pixel_size(self.iteration) * offset_mult[1]
         ];
         return new;
     }
@@ -25,10 +28,10 @@ impl RenderNode {
         match (self.split) {
             RenderSplitOption::Wait => {
                 self.split = RenderSplitOption::Continue(RenderSplit {
-                    tl: Box::new(self.new_split(0.5, 0.0)),
-                    tr: Box::new(self.new_split(0.5, 0.5)),
-                    bl: Box::new(self.new_split(0.0, 0.0)),
-                    br: Box::new(self.new_split(0.0, 0.5))
+                    tl: Box::new(self.new_split([0.5, 0.0])),
+                    tr: Box::new(self.new_split([0.5, 0.5])),
+                    bl: Box::new(self.new_split([0.0, 0.0])),
+                    br: Box::new(self.new_split([0.0, 0.5]))
                 });
             }
             RenderSplitOption::Stop => (),
@@ -40,19 +43,30 @@ impl RenderNode {
             }
         };
     }
-    pub fn check(&mut self) {
+    pub fn check(&mut self, column_values : &Vec<EvaluatedValues>) {
         match (self.split) {
             RenderSplitOption::Wait => {
-                /*if (self.position[0] > 0.75) {
+                let left_index  = (self.position[0] * (column_values.len() - 1) as f32) as usize;
+                let left_values = column_values[left_index].get_values();
+                println!("{:?}", left_values);
+                let mut passed = false;
+                for i in 0..left_values.len() {
+                    if (left_values[i] <= -1.5) {
+                        passed = true;
+                        break;
+                    }
+                }
+                if (! passed) {
                     self.split = RenderSplitOption::Stop;
-                }*/
+                }
+                
             },
             RenderSplitOption::Stop => {},
             RenderSplitOption::Continue(ref mut split) => {
-                split.bl.check();
-                split.tl.check();
-                split.br.check();
-                split.tr.check();
+                split.bl.check(column_values);
+                split.tl.check(column_values);
+                split.br.check(column_values);
+                split.tr.check(column_values);
             }
         };
     }

@@ -3,15 +3,19 @@ pub mod settings;
 use node::RenderNode;
 use settings::RenderSettings;
 
-use super::parse::node::Node;
+use crate::parse::node::{Node, EvaluatedValues};
+
 use image::ImageBuffer;
+use std::collections::HashMap;
 
 
-pub fn render(_node : Node, settings : RenderSettings) {
+pub fn render(node : Node, settings : RenderSettings) {
     let     resolution = get_resolution(&settings);
     let mut buffer     = ImageBuffer::new(resolution[0], resolution[1]);
 
-    let render_node_tree = generate_render_node_tree(&settings);
+    let column_values = generate_column_values(&settings, &resolution, &node);
+
+    let render_node_tree = generate_render_node_tree(&settings, &column_values);
 
     // Write pixels.
     for (pixel_x, pixel_y_reversed, pixel) in buffer.enumerate_pixels_mut() {
@@ -46,11 +50,23 @@ fn get_resolution(settings : &RenderSettings) -> [u32; 2] {
     return [resolution_x, resolution_y];
 }
 
+// Generate values for each column.
+fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], node : &Node) -> Vec<EvaluatedValues> {
+    let mut columns = vec![];
+    for i in 0..resolution[0] {
+        let mut variables  = HashMap::new();
+        let     x_variable = EvaluatedValues::new().push(settings.frame[0] + (settings.frame[2] - settings.frame[0]) * ((i as f64) / (resolution[0] as f64)));
+        variables.insert(String::from("x"), x_variable);
+        columns.push(node.evaluate(&variables));
+    }
+    return columns;
+}
+
 // Generate grid and split.
-fn generate_render_node_tree(settings : &RenderSettings) -> RenderNode {
+fn generate_render_node_tree(settings : &RenderSettings, column_values : &Vec<EvaluatedValues>) -> RenderNode {
     let mut render_node_tree = RenderNode::new();
-    for _i in 0..settings.iterations {
-        render_node_tree.check();
+    for _i in 0..settings.iterations + 1 {
+        render_node_tree.check(column_values);
         render_node_tree.split();
     }
     return render_node_tree;
