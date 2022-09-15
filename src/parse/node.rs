@@ -183,7 +183,7 @@ impl EvaluatedValues {
             new_values.values.push(if (a == 0.0) {0.0} else {a / a.abs()})
         });
     }
-    pub fn nthroot(&self, degree : EvaluatedValues) -> EvaluatedValues {
+    pub fn nthroot(&self, _degree : EvaluatedValues) -> EvaluatedValues {
         panic!("Unimplemented.");
     }
     pub fn sin(&self) -> EvaluatedValues {
