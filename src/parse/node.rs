@@ -121,6 +121,9 @@ impl EvaluatedValues {
     pub fn new() -> EvaluatedValues {
         return EvaluatedValues {values: vec![]};
     }
+    pub fn from(values : Vec<f64>) -> EvaluatedValues {
+        return EvaluatedValues {values: values};
+    }
     pub fn copy(values : &EvaluatedValues) -> EvaluatedValues {
         return EvaluatedValues { values: values.values.clone() };
     }
@@ -146,112 +149,82 @@ impl EvaluatedValues {
         return &self.values;
     }
     pub fn compress(&self, settings : &RenderSettings) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for i in 0..self.values.len() {
-            let value = self.values[i];
-            if (value >= settings.frame[1] && value < settings.frame[3]) {
-                new_values.values.push(value);
+        return self.unary_operation(|a, new_values| {
+            if (a >= settings.frame[1] && a < settings.frame[3]) {
+                new_values.values.push(a);
             }
-        }
-        return new_values;
+        });
     }
 
     pub fn addition(&self, other : EvaluatedValues) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            for b in 0..other.values.len() {
-                new_values.values.push(self.values[a] + other.values[b]);
-            }
-        }
-        return new_values;
+        return self.binary_operation(other, |a, b, new_values| new_values.values.push(a + b));
     }
     pub fn subtraction(&self, other : EvaluatedValues) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            for b in 0..other.values.len() {
-                new_values.values.push(self.values[a] - other.values[b]);
-            }
-        }
-        return new_values;
+        return self.binary_operation(other, |a, b, new_values| new_values.values.push(a - b));
     }
     pub fn multiplication(&self, other : EvaluatedValues) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            for b in 0..other.values.len() {
-                new_values.values.push(self.values[a] * other.values[b]);
-            }
-        }
-        return new_values;
+        return self.binary_operation(other, |a, b, new_values| new_values.values.push(a * b));
     }
     pub fn division(&self, other : EvaluatedValues) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            for b in 0..other.values.len() {
-                let c = other.values[b];
-                if (c != 0.0) {
-                    new_values.values.push(self.values[a] / c);
-                }
-            }
-        }
-        return new_values;
+        return self.binary_operation(other, |a, b, new_values| {
+            if (b != 0.0) {}
+                new_values.values.push(a * b);
+        });
     }
     pub fn power(&self, other : EvaluatedValues) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            for b in 0..other.values.len() {
-                new_values.values.push(self.values[a].powf(other.values[b]));
-            }
-        }
-        return new_values;
+        return self.binary_operation(other, |a, b, new_values| new_values.values.push(a.powf(b)));
     }
 
     pub fn abs(&self) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            new_values.values.push(self.values[a].abs());
-        }
-        return new_values;
+        return self.unary_operation(|a, new_values| new_values.values.push(a.abs()));
     }
     pub fn sign(&self) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            let b = self.values[a];
-            new_values.values.push(if (b == 0.0) {0.0} else {b / b.abs()});
-        }
-        return new_values;
+        return self.unary_operation(|a, new_values| {
+            new_values.values.push(if (a == 0.0) {0.0} else {a / a.abs()})
+        });
     }
-    pub fn nthroot(&self, _degree : EvaluatedValues) -> EvaluatedValues {
+    pub fn nthroot(&self, degree : EvaluatedValues) -> EvaluatedValues {
         panic!("Unimplemented.");
     }
     pub fn sin(&self) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            new_values.values.push(self.values[a].sin());
-        }
-        return new_values;
+        return self.unary_operation(|a, new_values| new_values.values.push(a.sin()));
     }
     pub fn cos(&self) -> EvaluatedValues {
-        let mut new_values = EvaluatedValues::new();
-        for a in 0..self.values.len() {
-            new_values.values.push(self.values[a].cos());
-        }
-        return new_values;
+        return self.unary_operation(|a, new_values| new_values.values.push(a.cos()));
     }
     pub fn tan(&self) -> EvaluatedValues {
+        return self.unary_operation(|a, new_values| new_values.values.push(a.tan()));
+    }
+    pub fn cot(&self) -> EvaluatedValues {
+        return EvaluatedValues::from(vec![1.0]).division(self.tan());
+    }
+    pub fn sec(&self) -> EvaluatedValues {
+        return EvaluatedValues::from(vec![1.0]).division(self.cos());
+    }
+    pub fn csc(&self) -> EvaluatedValues {
+        return EvaluatedValues::from(vec![1.0]).division(self.sin());
+    }
+
+    
+    fn unary_operation<T>(&self, target : T) -> EvaluatedValues
+        where T : Fn(f64, &mut EvaluatedValues)
+    {
         let mut new_values = EvaluatedValues::new();
         for a in 0..self.values.len() {
-            new_values.values.push(self.values[a].tan());
+            target(self.values[a], &mut new_values);
         }
         return new_values;
     }
-    pub fn cot(&self) -> EvaluatedValues {
-        panic!("Unimplemented.");
+    fn binary_operation<T>(&self, other : EvaluatedValues, target : T) -> EvaluatedValues
+        where T : Fn(f64, f64, &mut EvaluatedValues)
+    {
+        let mut new_values = EvaluatedValues::new();
+        for a in 0..self.values.len() {
+            for b in 0..other.values.len() {
+                target(self.values[a], other.values[b], &mut new_values);
+            }
+        }
+        return new_values;
     }
-    pub fn sec(&self) -> EvaluatedValues {
-        panic!("Unimplemented.");
-    }
-    pub fn csc(&self) -> EvaluatedValues {
-        panic!("Unimplemented.");
-    }
-
+    
 }

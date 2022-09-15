@@ -77,6 +77,16 @@ impl RenderNode {
             }
         };
     }
+    fn _check_top(&self, _settings : &RenderSettings) {
+        if (! matches!(self.split, RenderSplitOption::Wait)) {panic!("`check_top` called when split option is not `RenderSplitOption::Wait`.")};
+        panic!("Unimplemented.");
+    }
+    fn _check_side(&self, settings : &RenderSettings, _y_values : &EvaluatedValues) {
+        if (! matches!(self.split, RenderSplitOption::Wait)) {panic!("`check_side` called when split option is not RenderSplitOption::Wait.")};
+        let _bottom_value = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
+        let _top_value    = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
+        panic!("Unimplemented.");
+    }
     pub fn get_pixel(&self, position : [f32; 2]) -> [u8; 3] {
         return match (&self.split) {
             RenderSplitOption::Wait => [255, 0, 0],

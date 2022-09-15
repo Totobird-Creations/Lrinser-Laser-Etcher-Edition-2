@@ -14,7 +14,6 @@ pub fn render(node : Node, settings : RenderSettings) {
     let mut buffer     = ImageBuffer::new(resolution[0], resolution[1]);
 
     let column_values = generate_column_values(&settings, &resolution, &node);
-    println!("{:?}", column_values);
 
     let render_node_tree = generate_render_node_tree(&settings, &column_values);
 
