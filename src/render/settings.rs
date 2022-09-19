@@ -1,6 +1,6 @@
 #[derive(Clone)]
 pub struct RenderSettings {
-    // Corners of graph : Left, Top, Right, Bottom
+    // Corners of graph : Left, Bottom, Right, Top
     pub frame: [f64; 4],
     // Split depth: Times
     pub iterations: u32,

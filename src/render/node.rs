@@ -49,8 +49,9 @@ impl RenderNode {
     pub fn check(&mut self, settings : &RenderSettings, column_values : &Vec<EvaluatedValues>) {
         match (self.split) {
             RenderSplitOption::Wait => {
-                let left_index   = (self.position[0] * (column_values.len() as f32 - 1.0)) as usize;
-                let right_index  = left_index + 1;
+                let columns_length = column_values.len() as f32 - 1.0;
+                let left_index     = (self.position[0] * columns_length) as usize;
+                let right_index    = ((self.position[0] + get_pixel_size(self.iteration)) * columns_length) as usize;
                 // Get Y coord at top and bottom of split.
                 let bottom_value = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
                 let top_value    = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
