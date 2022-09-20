@@ -22,15 +22,16 @@ impl Node {
 
 #[derive(Debug)]
 pub enum NodeBase {
-    AdditionOperation       (Box<Node>, Box<Node>), // Left, Right
-    SubtractionOperation    (Box<Node>, Box<Node>), // Left, Right
-    MultiplicationOperation (Box<Node>, Box<Node>), // Left, Right
-    DivisionOperation       (Box<Node>, Box<Node>), // Top, Bottom
-    PowerOperation          (Box<Node>, Box<Node>), // Base, Degree
+    
+    AdditionOperation       (Box<Node>, Box<Node>), // Left, Right  : Left + Right
+    SubtractionOperation    (Box<Node>, Box<Node>), // Left, Right  : Left - Right
+    MultiplicationOperation (Box<Node>, Box<Node>), // Left, Right  : Left * Right
+    DivisionOperation       (Box<Node>, Box<Node>), // Top, Bottom  : Top / Bottom
+    PowerOperation          (Box<Node>, Box<Node>), // Base, Degree : Base.pow(Degree)
 
     AbsFunction     (Box<Node>),
     SignFunction    (Box<Node>),
-    NthRootFunction (Box<Node>, Box<Node>), // Degree (n), Powered
+    NthRootFunction (Box<Node>, Box<Node>), // Degree (n), Powered : ⁿ√(Powered)
     SinFunction     (Box<Node>),
     CosFunction     (Box<Node>),
     TanFunction     (Box<Node>),
@@ -40,7 +41,10 @@ pub enum NodeBase {
 
     MultiValue (Vec<Box<Node>>),
     Number     (f64),
-    Variable   (String)
+    Variable   (String),
+
+    Equals (Box<Node>, Box<Right>), // Left, Right : Left = Right
+    
 }
 impl NodeBase {
     pub fn to_string(&self) -> String {
@@ -70,12 +74,15 @@ impl NodeBase {
                 format!("[{}]", string.join(", "))
             },
             NodeBase::Number            (value)       => value.to_string(),
-            NodeBase::Variable          (name)        => name.clone()
+            NodeBase::Variable          (name)        => name.clone(),
+
+            NodeBase::Equals (left, right) => format!("({} = {})", (*left).to_string(), (*right).to_string())
 
         };
     }
     pub fn evaluate(&self, variables : &HashMap<String, EvaluatedValues>) -> EvaluatedValues {
         let values = match (self) {
+            
             NodeBase::AdditionOperation       (left, right) => left.evaluate(variables).addition(right.evaluate(variables)),
             NodeBase::SubtractionOperation    (left, right) => left.evaluate(variables).subtraction(right.evaluate(variables)),
             NodeBase::MultiplicationOperation (left, right) => left.evaluate(variables).multiplication(right.evaluate(variables)),
@@ -107,6 +114,13 @@ impl NodeBase {
                     panic!("Variable `{}` not defined.", name);
                 }
             }
+
+            NodeBase::Equals (left, right) => {
+                if (matches!(*left, NodeBase::Variable(name))) {
+                    
+                }
+            }
+            
         };
         return values;
     }

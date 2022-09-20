@@ -9,7 +9,7 @@ use image::ImageBuffer;
 use std::collections::HashMap;
 
 
-pub fn render(node : Node, settings : RenderSettings) {
+pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
     let     resolution = get_resolution(&settings);
     let mut buffer     = ImageBuffer::new(resolution[0], resolution[1]);
 
@@ -51,7 +51,7 @@ fn get_resolution(settings : &RenderSettings) -> [u32; 2] {
 }
 
 // Generate values for each column.
-fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], node : &Node) -> Vec<EvaluatedValues> {
+fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], node : &Vec<Node>) -> Vec<EvaluatedValues> {
     let mut columns = vec![];
     for i in 0..resolution[0] + 1 {
         let mut variables  = HashMap::new();

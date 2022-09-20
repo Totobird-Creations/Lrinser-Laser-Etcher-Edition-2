@@ -1,8 +1,10 @@
 #![allow(unused_parens)]
 
+use env_logger::{debug, info, warn, error}
+
 pub mod parse;
-pub use parse::node::{Node, NodeBase};
 pub mod render;
+pub use parse::node::{Node, NodeBase};
 use render::{render, settings::RenderSettings};
 
 fn main() {
@@ -28,5 +30,5 @@ fn main() {
         resolution: [0, 0],
         target: String::from("target.png"),
     };
-    render(tree, settings);
+    render(vec![tree], settings);
 }
