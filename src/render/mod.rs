@@ -13,7 +13,7 @@ pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
     let     resolution = get_resolution(&settings);
     let mut buffer     = ImageBuffer::new(resolution[0], resolution[1]);
 
-    let column_values = generate_column_values(&settings, &resolution, &node);
+    let column_values = generate_column_values(&settings, &resolution, &nodes);
 
     let render_node_tree = generate_render_node_tree(&settings, &column_values);
 
@@ -51,14 +51,23 @@ fn get_resolution(settings : &RenderSettings) -> [u32; 2] {
 }
 
 // Generate values for each column.
-fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], node : &Vec<Node>) -> Vec<EvaluatedValues> {
+fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], nodes : &Vec<Node>) -> Vec<EvaluatedValues> {
     let mut columns = vec![];
+    let mut variables  = HashMap::new();
     for i in 0..resolution[0] + 1 {
-        let mut variables  = HashMap::new();
-        variables.insert(String::from("x"), EvaluatedValues::new().push(
+        variables.clear();
+        let x = EvaluatedValues::new().push(
             settings.frame[0] + (settings.frame[2] - settings.frame[0]) * ((i as f64) / (resolution[0] as f64))
-        ));
-        columns.push(node.evaluate(&variables).compress(&settings));
+        );
+        let mut values = EvaluatedValues::new();
+        for node in nodes {
+            variables.insert(String::from("x"), x.clone());
+            node.evaluate(&mut variables);
+            if (variables.contains_key(&String::from("y"))) {
+                values = values.add(variables.remove(&String::from("y")).unwrap());
+            }
+        }
+        columns.push(values.compress(&settings));
     }
     return columns;
 }

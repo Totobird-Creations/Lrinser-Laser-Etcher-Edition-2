@@ -1,13 +1,23 @@
 #![allow(unused_parens)]
 
-use env_logger::{debug, info, warn, error}
+use std::io::Write;
+
+use env_logger;
 
 pub mod parse;
 pub mod render;
 pub use parse::node::{Node, NodeBase};
 use render::{render, settings::RenderSettings};
 
+
 fn main() {
+    env_logger::builder()
+        .format(|buf, record| {
+            writeln!(buf, "{}: {}", record.level(), record.args())
+        })
+        .init();
+
+
     // sin(|x|)
     let a = Node::new(NodeBase::SinFunction(
         Node::new(NodeBase::AbsFunction(
@@ -22,13 +32,17 @@ fn main() {
             Node::new(NodeBase::Number(1.0))
         ]))
     ));
-    let tree = *Node::new(NodeBase::MultiValue(vec![a, b]));
+    let tree = Node::new(NodeBase::MultiValue(vec![a, b]));
+    let eq   = *Node::new(NodeBase::Equals(
+        Node::new(NodeBase::Variable(String::from("y"))),
+        tree
+    ));
 
     let settings = RenderSettings {
         frame: [-5.0, -5.0, 5.0, 5.0],
-        iterations: 7,
+        iterations: 6,
         resolution: [0, 0],
         target: String::from("target.png"),
     };
-    render(vec![tree], settings);
+    render(vec![eq], settings);
 }

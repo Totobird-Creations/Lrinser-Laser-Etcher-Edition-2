@@ -14,7 +14,7 @@ impl Node {
     pub fn to_string(&self) -> String {
         return self.base.to_string();
     }
-    pub fn evaluate(&self, variables : &HashMap<String, EvaluatedValues>) -> EvaluatedValues {
+    pub fn evaluate(&self, variables : &mut HashMap<String, EvaluatedValues>) -> EvaluatedValues {
         return self.base.evaluate(variables);
     }
 }
@@ -43,7 +43,7 @@ pub enum NodeBase {
     Number     (f64),
     Variable   (String),
 
-    Equals (Box<Node>, Box<Right>), // Left, Right : Left = Right
+    Equals (Box<Node>, Box<Node>), // Left, Right : Left = Right
     
 }
 impl NodeBase {
@@ -80,7 +80,7 @@ impl NodeBase {
 
         };
     }
-    pub fn evaluate(&self, variables : &HashMap<String, EvaluatedValues>) -> EvaluatedValues {
+    pub fn evaluate(&self, variables : &mut HashMap<String, EvaluatedValues>) -> EvaluatedValues {
         let values = match (self) {
             
             NodeBase::AdditionOperation       (left, right) => left.evaluate(variables).addition(right.evaluate(variables)),
@@ -116,8 +116,13 @@ impl NodeBase {
             }
 
             NodeBase::Equals (left, right) => {
-                if (matches!(*left, NodeBase::Variable(name))) {
-                    
+                match (&left.base) {
+                    NodeBase::Variable(name) => {
+                        let values = right.evaluate(variables);
+                        variables.insert(name.clone(), values);
+                        EvaluatedValues::new()
+                    }
+                    _ => panic!("Unimplemented.")
                 }
             }
             
