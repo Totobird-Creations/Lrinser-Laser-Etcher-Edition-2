@@ -1,42 +1,28 @@
 #![allow(unused_parens)]
 
-use std::io::Write;
+use log;
 
-use env_logger;
-
+pub mod logger;
+use logger::Logger;
 pub mod parse;
 pub mod render;
-pub use parse::node::{Node, NodeBase};
+use parse::node::{Node, NodeBase};
 use render::{render, settings::RenderSettings};
 
 
 fn main() {
-    env_logger::builder()
-        .format(|buf, record| {
-            writeln!(buf, "{}: {}", record.level(), record.args())
-        })
-        .init();
+    Logger::init().expect("Logger failed to initialise.");
+    log::info!("Initialised.");
+    log::info!("Reading equations from {}.", "<null>");
 
-
-    // sin(|x|)
-    let a = Node::new(NodeBase::SinFunction(
-        Node::new(NodeBase::AbsFunction(
+    let eq = *Node::new(NodeBase::Equals(
+        Node::new(NodeBase::Variable(String::from("y"))),
+        Node::new(NodeBase::InverseTangent(
             Node::new(NodeBase::Variable(String::from("x")))
         ))
     ));
-    // x + [-1, 1]
-    let b = Node::new(NodeBase::AdditionOperation(
-        Node::new(NodeBase::Variable(String::from("x"))),
-        Node::new(NodeBase::MultiValue(vec![
-            Node::new(NodeBase::Number(-1.0)),
-            Node::new(NodeBase::Number(1.0))
-        ]))
-    ));
-    let tree = Node::new(NodeBase::MultiValue(vec![a, b]));
-    let eq   = *Node::new(NodeBase::Equals(
-        Node::new(NodeBase::Variable(String::from("y"))),
-        tree
-    ));
+    let equations = vec![eq];
+    log::debug!("Loaded {} equation{}.", equations.len(), if (equations.len() == 1) {""} else {"s"});
 
     let settings = RenderSettings {
         frame: [-5.0, -5.0, 5.0, 5.0],
@@ -44,5 +30,7 @@ fn main() {
         resolution: [0, 0],
         target: String::from("target.png"),
     };
-    render(vec![eq], settings);
+    render(equations, settings);
+
+    log::info!("Finished.");
 }

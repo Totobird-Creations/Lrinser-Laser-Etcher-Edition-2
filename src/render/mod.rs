@@ -3,7 +3,9 @@ pub mod settings;
 use node::RenderNode;
 use settings::RenderSettings;
 
+use crate::error;
 use crate::parse::node::{Node, EvaluatedValues};
+use crate::parse::var;
 
 use image::ImageBuffer;
 use std::collections::HashMap;
@@ -11,13 +13,15 @@ use std::collections::HashMap;
 
 pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
     let     resolution = get_resolution(&settings);
-    let mut buffer     = ImageBuffer::new(resolution[0], resolution[1]);
+    log::debug!("Setting resolution to {},{} for {} iteration{}.", resolution[0], resolution[1], settings.iterations, if (settings.iterations == 1) {""} else {"s"});
 
     let column_values = generate_column_values(&settings, &resolution, &nodes);
 
     let render_node_tree = generate_render_node_tree(&settings, &column_values);
 
     // Write pixels.
+    let mut buffer = ImageBuffer::new(resolution[0], resolution[1]);
+    log::debug!("Writing {} pixel{} to image buffer.", resolution[0] * resolution[1], if (resolution[0] * resolution[1] == 1) {""} else {"s"});
     for (pixel_x, pixel_y_reversed, pixel) in buffer.enumerate_pixels_mut() {
         let pixel_y = resolution[1] - (pixel_y_reversed + 1);
         let rgb     = render_node_tree.get_pixel([
@@ -31,9 +35,10 @@ pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
     }
 
     // Write file.
+    log::debug!("Writing image buffer to file `{}`.", settings.target.replace("\\", "\\\\").replace("`", "\\`"));
     match (buffer.save(settings.target)) {
         Ok(_)  => (),
-        Err(_) => panic!("Image write failed.")
+        Err(_) => error!("Image write failed.")
     };
 }
 
@@ -52,28 +57,44 @@ fn get_resolution(settings : &RenderSettings) -> [u32; 2] {
 
 // Generate values for each column.
 fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], nodes : &Vec<Node>) -> Vec<EvaluatedValues> {
+    log::debug!("Generating values for {} column{}.", resolution[0] + 1, if (resolution[0] + 1 == 1) {""} else {"s"});
     let mut columns = vec![];
     let mut variables  = HashMap::new();
     for i in 0..resolution[0] + 1 {
         variables.clear();
-        let x = EvaluatedValues::new().push(
+        let x = EvaluatedValues::from(vec![
             settings.frame[0] + (settings.frame[2] - settings.frame[0]) * ((i as f64) / (resolution[0] as f64))
-        );
+        ]);
         let mut values = EvaluatedValues::new();
         for node in nodes {
             variables.insert(String::from("x"), x.clone());
+            insert_consts(&mut variables);
             node.evaluate(&mut variables);
             if (variables.contains_key(&String::from("y"))) {
-                values = values.add(variables.remove(&String::from("y")).unwrap());
+                values = values.add(&variables.remove(&String::from("y")).unwrap());
             }
         }
-        columns.push(values.compress(&settings));
+        values = values.compress(&settings);
+        log::trace!("Value {} found for column {}.", values, i);
+        columns.push(values);
     }
     return columns;
 }
 
+// Add the constants to the variable set.
+fn insert_consts(variables : &mut HashMap<String, EvaluatedValues>) {
+    variables.insert(String::from("pi"  ), EvaluatedValues::from(vec![var::PI  ]));
+    variables.insert(String::from("π"   ), EvaluatedValues::from(vec![var::PI  ]));
+    variables.insert(String::from("tau" ), EvaluatedValues::from(vec![var::TAU ]));
+    variables.insert(String::from("𝜏"   ), EvaluatedValues::from(vec![var::TAU ]));
+    variables.insert(String::from("phi" ), EvaluatedValues::from(vec![var::PHI ]));
+    variables.insert(String::from("φ"   ), EvaluatedValues::from(vec![var::PHI ]));
+    variables.insert(String::from("e"   ), EvaluatedValues::from(vec![var::E   ]));
+}
+
 // Generate grid and split.
 fn generate_render_node_tree(settings : &RenderSettings, column_values : &Vec<EvaluatedValues>) -> RenderNode {
+    log::debug!("Generating render node tree.");
     let mut render_node_tree = RenderNode::new(settings.iterations);
     for _i in 0..settings.iterations + 1 {
         render_node_tree.check(settings, column_values);

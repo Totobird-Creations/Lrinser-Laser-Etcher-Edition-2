@@ -1,5 +1,6 @@
+use crate::error;
 use crate::parse::node::EvaluatedValues;
-use super::settings::RenderSettings;
+use crate::render::settings::RenderSettings;
 
 
 #[derive(Clone, Debug)]
@@ -30,6 +31,7 @@ impl RenderNode {
     pub fn split(&mut self) {
         match (self.split) {
             RenderSplitOption::Wait => {
+                log::trace!("Iteration {}, position {},{} split.", self.iteration, self.position[0], self.position[1]);
                 self.split = RenderSplitOption::Continue(RenderSplit {
                     tl: Box::new(self.new_split([0.5, 0.0])),
                     tr: Box::new(self.new_split([0.5, 0.5])),
@@ -66,6 +68,7 @@ impl RenderNode {
                     }
                 }
                 if (! passed) {
+                    log::trace!("Check on iteration {}, position {},{} did not pass.", self.iteration, self.position[0], self.position[1]);
                     self.split = RenderSplitOption::Stop;
                 }
             },
@@ -79,11 +82,11 @@ impl RenderNode {
         };
     }
     fn _check_top(&self, _settings : &RenderSettings) {
-        if (! matches!(self.split, RenderSplitOption::Wait)) {panic!("`check_top` called when split option is not `RenderSplitOption::Wait`.")};
+        if (! matches!(self.split, RenderSplitOption::Wait)) {error!("`check_top` called when split option is not `RenderSplitOption::Wait`.")};
         panic!("Unimplemented.");
     }
     fn _check_side(&self, settings : &RenderSettings, _y_values : &EvaluatedValues) {
-        if (! matches!(self.split, RenderSplitOption::Wait)) {panic!("`check_side` called when split option is not RenderSplitOption::Wait.")};
+        if (! matches!(self.split, RenderSplitOption::Wait)) {error!("`check_side` called when split option is not RenderSplitOption::Wait.")};
         let _bottom_value = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
         let _top_value    = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
         panic!("Unimplemented.");
