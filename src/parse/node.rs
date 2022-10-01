@@ -1,12 +1,16 @@
 use std::collections::HashMap;
 use std::fmt;
+use std::process;
 
-use crate::error;
+use loggerithm::{logger, log};
+use loggerithm::level::ERROR;
+logger!(super);
+
 use crate::parse::var;
 use crate::render::settings::RenderSettings;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Node {
     pub base : NodeBase,
 }
@@ -23,7 +27,7 @@ impl Node {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum NodeBase {
     
     Addition       (Box<Node>, Box<Node>), // Left (l), Right (r)  : l + r
@@ -115,7 +119,7 @@ impl NodeBase {
                 format!("[{}]", string.join(", "))
             },
             NodeBase::Number            (value)       => value.to_string(),
-            NodeBase::Variable          (name)        => name.clone(),
+            NodeBase::Variable          (name)        => String::from(name),
 
             NodeBase::Equals (left, right) => format!("({} = {})", (*left).to_string(), (*right).to_string())
 
@@ -169,9 +173,10 @@ impl NodeBase {
             NodeBase::Number            (value)       => EvaluatedValues::new().push(*value),
             NodeBase::Variable          (name)        => {
                 if (variables.contains_key(name)) {
-                    EvaluatedValues::new().add(&variables.get(name).unwrap().clone())
+                    EvaluatedValues::new().add(&variables.get(name).unwrap())
                 } else {
-                    error!("Variable `{}` not defined.", name);
+                    log!(ERROR, "Variable `{}` not defined.", name);
+                    process::exit(1);
                 }
             }
 
@@ -179,7 +184,7 @@ impl NodeBase {
                 match (&left.base) {
                     NodeBase::Variable(name) => {
                         let values = right.evaluate(variables);
-                        variables.insert(name.clone(), values);
+                        variables.insert(String::from(name), values);
                     },
                     _ => ()
                 }
@@ -192,7 +197,7 @@ impl NodeBase {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct EvaluatedValues {
     values : Vec<f64>
 }
@@ -204,7 +209,7 @@ impl EvaluatedValues {
         return EvaluatedValues {values: values};
     }
     pub fn copy(values : &EvaluatedValues) -> EvaluatedValues {
-        return EvaluatedValues { values: values.values.clone() };
+        return EvaluatedValues::from(values.values.clone());
     }
 
     pub fn add(&self, values : &EvaluatedValues) -> EvaluatedValues {

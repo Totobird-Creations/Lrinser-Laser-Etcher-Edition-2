@@ -1,9 +1,15 @@
-use crate::error;
+use std::process;
+
+use loggerithm::{logger, log};
+use loggerithm::level::{TRACE, FATAL};
+logger!(super);
+
+use crate::helper;
 use crate::parse::node::EvaluatedValues;
 use crate::render::settings::RenderSettings;
 
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct RenderNode {
     split      : RenderSplitOption,
     iteration  : u32,
@@ -31,7 +37,11 @@ impl RenderNode {
     pub fn split(&mut self) {
         match (self.split) {
             RenderSplitOption::Wait => {
-                log::trace!("Iteration {}, position {},{} split.", self.iteration, self.position[0], self.position[1]);
+                log!(TRACE,
+                    "Iteration {}, position {},{} split.",
+                    helper::commaify_i64(self.iteration.into()),
+                    self.position[0], self.position[1]
+                );
                 self.split = RenderSplitOption::Continue(RenderSplit {
                     tl: Box::new(self.new_split([0.5, 0.0])),
                     tr: Box::new(self.new_split([0.5, 0.5])),
@@ -58,17 +68,14 @@ impl RenderNode {
                 let bottom_value = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
                 let top_value    = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
                 // Collect all values on the left and right edge.
-                let mut values = column_values[left_index].get_values().clone();
-                values.append(&mut column_values[right_index].get_values().clone());
-                let mut passed = false;
-                for value in values {
-                    if (value >= bottom_value && value < top_value) {
-                        passed = true;
-                        break;
-                    }
-                }
+                let passed =   self.check_side(column_values[left_index  ].get_values(), bottom_value, top_value)
+                            || self.check_side(column_values[right_index ].get_values(), bottom_value, top_value);
                 if (! passed) {
-                    log::trace!("Check on iteration {}, position {},{} did not pass.", self.iteration, self.position[0], self.position[1]);
+                    log!(TRACE,
+                        "Check on iteration {}, position {},{} did not pass.",
+                        helper::commaify_i64(self.iteration.into()),
+                        self.position[0], self.position[1]
+                    );
                     self.split = RenderSplitOption::Stop;
                 }
             },
@@ -82,31 +89,39 @@ impl RenderNode {
         };
     }
     fn _check_top(&self, _settings : &RenderSettings) {
-        if (! matches!(self.split, RenderSplitOption::Wait)) {error!("`check_top` called when split option is not `RenderSplitOption::Wait`.")};
+        if (! matches!(self.split, RenderSplitOption::Wait)) {
+            log!(FATAL, "`check_top` called when split option is not `RenderSplitOption::Wait`.");
+            process::exit(1);
+        };
         panic!("Unimplemented.");
     }
-    fn _check_side(&self, settings : &RenderSettings, _y_values : &EvaluatedValues) {
-        if (! matches!(self.split, RenderSplitOption::Wait)) {error!("`check_side` called when split option is not RenderSplitOption::Wait.")};
-        let _bottom_value = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * (self.position[1] as f64);
-        let _top_value    = settings.frame[1] + (settings.frame[3] - settings.frame[1]) * ((self.position[1] + get_pixel_size(self.iteration)) as f64);
-        panic!("Unimplemented.");
+    fn check_side(&self, side_values : &Vec<f64>, bottom_value : f64, top_value : f64) -> bool {
+        if (! matches!(self.split, RenderSplitOption::Wait)) {
+            log!(FATAL, "`check_side` called when split option is not RenderSplitOption::Wait.");
+            process::exit(1);
+        };
+        for value in side_values {
+            if (value >= &bottom_value && value < &top_value) {
+                return true;
+            }
+        }
+        return false;
     }
     pub fn get_pixel(&self, position : [f32; 2]) -> [u8; 3] {
         return match (&self.split) {
-            RenderSplitOption::Wait => [255, 0, 0],
-            RenderSplitOption::Stop => {
-                let i = ((self.iteration as f64 / self.iterations as f64) * 255.0) as u8;
-                [i, i, i]
-            },
             RenderSplitOption::Continue(ref split) => {
                 let center_pos = [
                     self.position[0] + get_pixel_size(self.iteration + 1),
                     self.position[1] + get_pixel_size(self.iteration + 1)
                 ];
-                [split.bl.clone(), split.tl.clone(), split.br.clone(), split.tr.clone()][
+                [&split.bl, &split.tl, &split.br, &split.tr][
                     if (position[0] < center_pos[0]) {0} else {1} +
                     if (position[1] < center_pos[1]) {0} else {2}
                 ].get_pixel(position)
+            },
+            _ => {
+                let i = ((self.iteration as f64 / self.iterations as f64) * 255.0) as u8;
+                [i, i, i]
             }
         };
     }
@@ -117,7 +132,7 @@ fn get_pixel_size(iteration : u32) -> f32 {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum RenderSplitOption {
     Wait,                 // Split if possible.
     Stop,                 // Do not split.
@@ -125,7 +140,7 @@ pub enum RenderSplitOption {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct RenderSplit {
     tl : Box<RenderNode>,
     tr : Box<RenderNode>,
