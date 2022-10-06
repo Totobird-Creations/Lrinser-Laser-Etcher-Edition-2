@@ -8,6 +8,8 @@ Simplification
 
 Optimisation:
 - [x] Splitting
+- [x] Borrowing
+- [x] No cloning
 - [ ] Threads
 
 Bugfixes:

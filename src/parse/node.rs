@@ -37,6 +37,7 @@ pub enum NodeBase {
     Power          (Box<Node>, Box<Node>), // Base (b), Degree (d) : bᵈ
 
     AbsoluteValue       (Box<Node>),
+    SquareRoot          (Box<Node>),
     NthRoot             (Box<Node>, Box<Node>), // Degree (n), Powered : ⁿ√(Powered)
     Sine                (Box<Node>),
     Cosine              (Box<Node>),
@@ -83,6 +84,7 @@ impl NodeBase {
             NodeBase::Power          (left, right) => format!("({} ^ {})", (*left).to_string(), (*right).to_string()),
 
             NodeBase::AbsoluteValue       (arg)  => format!("|{}|", arg.to_string()),
+            NodeBase::SquareRoot          (arg)  => format!("sqrt({})", arg.to_string()),
             NodeBase::NthRoot             (n, p) => format!("nthroot({}, {})", n.to_string(), p.to_string()),
             NodeBase::Sine                (arg)  => format!("sin({})", arg.to_string()),
             NodeBase::Cosine              (arg)  => format!("cos({})", arg.to_string()),
@@ -135,7 +137,8 @@ impl NodeBase {
             NodeBase::Power          (left, right) => left.evaluate(variables).power(&right.evaluate(variables)),
 
             NodeBase::AbsoluteValue       (arg)  => arg.evaluate(variables).absolute_value(),
-            NodeBase::NthRoot             (n, p) => p.evaluate(variables).nthroot(&n.evaluate(variables)),
+            NodeBase::SquareRoot          (arg)  => arg.evaluate(variables).square_root(),
+            NodeBase::NthRoot             (n, p) => p.evaluate(variables).nth_root(&n.evaluate(variables)),
             NodeBase::Sine                (arg)  => arg.evaluate(variables).sine(),
             NodeBase::Cosine              (arg)  => arg.evaluate(variables).cosine(),
             NodeBase::Tangent             (arg)  => arg.evaluate(variables).tangent(),
@@ -251,8 +254,9 @@ impl EvaluatedValues {
     }
     pub fn division(&self, other : &EvaluatedValues) -> EvaluatedValues {
         return self.binary_operation(other, |a, b, new_values| {
-            if (b != 0.0) {}
+            if (b != 0.0) {
                 new_values.values.push(a * b);
+            }
         });
     }
     pub fn power(&self, other : &EvaluatedValues) -> EvaluatedValues {
@@ -263,7 +267,14 @@ impl EvaluatedValues {
     pub fn absolute_value(&self) -> EvaluatedValues {
         return self.unary_operation(|a, new_values| new_values.values.push(a.abs()));
     }
-    pub fn nthroot(&self, _degree : &EvaluatedValues) -> EvaluatedValues {
+    pub fn square_root(&self) -> EvaluatedValues {
+        return self.unary_operation(|a, new_values| {
+            if (a >= 0.0) {
+                new_values.values.push(a.sqrt());
+            }
+        });
+    }
+    pub fn nth_root(&self, _degree : &EvaluatedValues) -> EvaluatedValues {
         panic!("Unimplemented.");
     }
     pub fn sine(&self) -> EvaluatedValues {

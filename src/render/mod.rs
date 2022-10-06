@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::process;
 
-use image::{ImageBuffer, RgbImage};
+use image::{ImageBuffer, GrayImage};
 use loggerithm::{logger, log};
 use loggerithm::level::{TRACE, DEBUG, FATAL};
 logger!(super);
@@ -17,7 +17,7 @@ use crate::parse::var;
 
 
 pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
-    let     resolution = get_resolution(&settings);
+    let resolution = get_resolution(&settings);
     log!(DEBUG,
         "Setting resolution to {},{} for {} iteration{}.",
         helper::commaify_i64(resolution[0].into()), helper::commaify_i64(resolution[1].into()),
@@ -30,7 +30,7 @@ pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
     let render_node_tree = generate_render_node_tree(&settings, &column_values);
 
     // Write pixels.
-    let mut buffer : RgbImage = ImageBuffer::new(resolution[0], resolution[1]);
+    let mut buffer : GrayImage = ImageBuffer::new(resolution[0], resolution[1]);
     log!(DEBUG,
         "Writing {} pixel{} to image buffer.",
         helper::commaify_i64((resolution[0] * resolution[1]).into()),
@@ -38,11 +38,11 @@ pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
     );
     for (pixel_x, pixel_y_reversed, pixel) in buffer.enumerate_pixels_mut() {
         let pixel_y = resolution[1] - (pixel_y_reversed + 1);
-        let rgb     = render_node_tree.get_pixel([
+        let colour  = render_node_tree.get_pixel([
             (pixel_x as f32) / (resolution[0] as f32),
             (pixel_y as f32) / (resolution[1] as f32)
         ]);
-        *pixel = image::Rgb([rgb[0], rgb[1], rgb[2]]);
+        *pixel = image::Luma(colour);
     }
 
     // Write file.

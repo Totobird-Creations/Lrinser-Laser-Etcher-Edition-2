@@ -48,18 +48,50 @@ fn main() {
     log!(INFO, "Initialised.");
     log!(INFO, "Reading equations from {}.", "<null>");
 
-    let eq = *Node::new(NodeBase::Equals(
+    let eq0 = *Node::new(NodeBase::Equals(
         Node::new(NodeBase::Variable(String::from("y"))),
         Node::new(NodeBase::InverseTangent(
             Node::new(NodeBase::Variable(String::from("x")))
         ))
     ));
-    let equations = vec![eq];
+    let eq1 = *Node::new(NodeBase::Equals(
+        Node::new(NodeBase::Variable(String::from("y"))),
+        Node::new(NodeBase::Sine(
+            Node::new(NodeBase::Variable(String::from("x")))
+        ))
+    ));
+    let eq2 = *Node::new(NodeBase::Equals(
+        Node::new(NodeBase::Variable(String::from("y"))),
+        Node::new(NodeBase::Variable(String::from("x")))
+    ));
+    let eq3 = *Node::new(NodeBase::Equals(
+        Node::new(NodeBase::Variable(String::from("y"))),
+        Node::new(NodeBase::Addition(
+            Node::new(NodeBase::Sine(
+                Node::new(NodeBase::Variable(String::from("x")))
+            )),
+            Node::new(NodeBase::Multiplication(
+                Node::new(NodeBase::Variable(String::from("x"))),
+                Node::new(NodeBase::Number(-0.325))
+            ))
+        ))
+    ));
+    let eq4 = *Node::new(NodeBase::Equals(
+        Node::new(NodeBase::Variable(String::from("y"))),
+        Node::new(NodeBase::Multiplication(
+            Node::new(NodeBase::Power(
+                Node::new(NodeBase::Variable(String::from("x"))),
+                Node::new(NodeBase::Number(3.0))
+            )),
+            Node::new(NodeBase::Number(-0.125))
+        ))
+    ));
+    let equations = vec![eq0, eq1, eq2, eq3, eq4];
     log!(DEBUG, "Loaded {} equation{}.", equations.len(), if (equations.len() == 1) {""} else {"s"});
 
     let settings = RenderSettings {
         frame: [-5.0, -5.0, 5.0, 5.0],
-        iterations: 10,
+        iterations: 11,
         resolution: [0, 0],
         target: String::from("target.png"),
     };

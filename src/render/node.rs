@@ -107,7 +107,7 @@ impl RenderNode {
         }
         return false;
     }
-    pub fn get_pixel(&self, position : [f32; 2]) -> [u8; 3] {
+    pub fn get_pixel(&self, position : [f32; 2]) -> [u8; 1] {
         return match (&self.split) {
             RenderSplitOption::Continue(ref split) => {
                 let center_pos = [
@@ -119,10 +119,16 @@ impl RenderNode {
                     if (position[1] < center_pos[1]) {0} else {2}
                 ].get_pixel(position)
             },
-            _ => {
+            RenderSplitOption::Stop => {
+                [255]
+            },
+            RenderSplitOption::Wait => {
+                [0]
+            }
+            /*_ => {
                 let i = ((self.iteration as f64 / self.iterations as f64) * 255.0) as u8;
                 [i, i, i]
-            }
+            }*/
         };
     }
 }
