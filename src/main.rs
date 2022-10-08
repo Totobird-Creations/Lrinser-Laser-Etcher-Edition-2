@@ -90,10 +90,10 @@ fn main() {
     log!(DEBUG, "Loaded {} equation{}.", equations.len(), if (equations.len() == 1) {""} else {"s"});
 
     let settings = RenderSettings {
-        frame: [-5.0, -5.0, 5.0, 5.0],
-        iterations: 11,
-        resolution: [0, 0],
-        target: String::from("target.png"),
+        frame       : [-5.0, -5.0, 5.0, 5.0],
+        split_depth : 11,
+        resolution  : [0, 0],
+        target      : String::from("target.png")
     };
     render(equations, settings);
 
