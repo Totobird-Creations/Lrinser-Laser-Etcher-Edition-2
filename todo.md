@@ -12,8 +12,9 @@ Optimisation:
 - [x] No cloning
 - [ ] Threads
 
-Bugfixes:
+Bug Fixes:
 - [ ] Lines aren't rendered unless they go through the left or right edge of the column.
+    - [ ] Convert to x=
 
 Editor:
 - [ ] Equations
@@ -110,3 +111,4 @@ Constants:
 - [x] tau
 - [x] phi
 - [x] e
+- [x] i

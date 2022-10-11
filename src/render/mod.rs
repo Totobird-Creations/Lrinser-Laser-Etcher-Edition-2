@@ -12,7 +12,8 @@ use node::RenderNode;
 use settings::RenderSettings;
 
 use crate::helper;
-use crate::parse::node::{Node, EvaluatedValues};
+use crate::parse::node::Node;
+use crate::parse::values::EvaluatedValues;
 use crate::parse::var;
 
 
