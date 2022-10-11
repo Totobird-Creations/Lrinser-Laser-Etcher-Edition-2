@@ -84,7 +84,7 @@ fn main() {
 
     let settings = RenderSettings {
         frame: [-5.0, -5.0, 5.0, 5.0],
-        iterations: 10,
+        split_depth: 10,
         resolution: [0, 0],
         target: String::from("target.png"),
     };

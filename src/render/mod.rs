@@ -22,8 +22,8 @@ pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
     log!(DEBUG,
         "Setting resolution to {},{} for {} iteration{}.",
         helper::commaify_i64(resolution[0].into()), helper::commaify_i64(resolution[1].into()),
-        settings.iterations,
-        if (settings.iterations == 1) {""} else {"s"}
+        settings.split_depth,
+        if (settings.split_depth == 1) {""} else {"s"}
     );
 
     let column_values = generate_column_values(&settings, &resolution, &nodes);
@@ -61,11 +61,11 @@ pub fn render(nodes : Vec<Node>, settings : RenderSettings) {
 fn get_resolution(settings : &RenderSettings) -> [u32; 2] {
     let mut resolution_x = settings.resolution[0];
     if (resolution_x <= 0) {
-        resolution_x = u32::pow(2, settings.iterations);
+        resolution_x = u32::pow(2, settings.split_depth);
     }
     let mut resolution_y = settings.resolution[1];
     if (resolution_y <= 0) {
-        resolution_y = u32::pow(2, settings.iterations);
+        resolution_y = u32::pow(2, settings.split_depth);
     }
     return [resolution_x, resolution_y];
 }
@@ -118,8 +118,8 @@ fn insert_consts(variables : &mut HashMap<String, EvaluatedValues>) {
 // Generate grid and split.
 fn generate_render_node_tree(settings : &RenderSettings, column_values : &Vec<EvaluatedValues>) -> RenderNode {
     log!(DEBUG, "Generating render node tree.");
-    let mut render_node_tree = RenderNode::new(settings.iterations);
-    for _i in 0..settings.iterations + 1 {
+    let mut render_node_tree = RenderNode::new(settings.split_depth);
+    for _i in 0..settings.split_depth + 1 {
         render_node_tree.check(settings, column_values);
         render_node_tree.split();
     }
