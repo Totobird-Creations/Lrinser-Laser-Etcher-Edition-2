@@ -120,15 +120,11 @@ impl RenderNode {
                 ].get_pixel(position)
             },
             RenderSplitOption::Stop => {
-                [255]
+                [((self.iteration as f64 / self.iterations as f64) * 255.0) as u8]
             },
             RenderSplitOption::Wait => {
-                [0]
+                [255]
             }
-            /*_ => {
-                let i = ((self.iteration as f64 / self.iterations as f64) * 255.0) as u8;
-                [i, i, i]
-            }*/
         };
     }
 }

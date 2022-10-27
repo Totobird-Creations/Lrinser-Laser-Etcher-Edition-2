@@ -88,7 +88,7 @@ fn generate_column_values(settings : &RenderSettings, resolution : &[u32; 2], no
         for node in nodes {
             variables.insert(String::from("x"), EvaluatedValues::copy(&x));
             insert_consts(&mut variables);
-            node.evaluate(&mut variables);
+            node.evaluate(&String::from("y"), &mut variables);
             if (variables.contains_key(&String::from("y"))) {
                 values = values.add(&variables.remove(&String::from("y")).unwrap());
             }

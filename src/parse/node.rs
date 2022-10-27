@@ -21,8 +21,8 @@ impl Node {
     pub fn to_string(&self) -> String {
         return self.base.to_string();
     }
-    pub fn evaluate(&self, variables : &mut HashMap<String, EvaluatedValues>) -> EvaluatedValues {
-        return self.base.evaluate(variables);
+    pub fn evaluate(&self, target_variable : &String, variables : &mut HashMap<String, EvaluatedValues>) -> EvaluatedValues {
+        return self.base.evaluate(target_variable, variables);
     }
 }
 
@@ -127,49 +127,54 @@ impl NodeBase {
 
         };
     }
-    pub fn evaluate(&self, target_variable : String, variables : &mut HashMap<String, EvaluatedValues>) -> EvaluatedValues {
+
+    pub fn evaluate(&self, target_variable : &String, variables : &mut HashMap<String, EvaluatedValues>) -> EvaluatedValues {
+        macro evaluate {
+            ($from:expr) => {($from).evaluate(&target_variable, variables)}
+        }
+        
         let values = match (self) {
             
-            NodeBase::Addition       (left, right) => left.evaluate(variables).addition(&right.evaluate(variables)),
-            NodeBase::Subtraction    (left, right) => left.evaluate(variables).subtraction(&right.evaluate(variables)),
-            NodeBase::Multiplication (left, right) => left.evaluate(variables).multiplication(&right.evaluate(variables)),
-            NodeBase::Division       (left, right) => left.evaluate(variables).division(&right.evaluate(variables)),
-            NodeBase::Power          (left, right) => left.evaluate(variables).power(&right.evaluate(variables)),
+            NodeBase::Addition       (left, right) => evaluate!(left).addition(&evaluate!(right)),
+            NodeBase::Subtraction    (left, right) => evaluate!(left).subtraction(&evaluate!(right)),
+            NodeBase::Multiplication (left, right) => evaluate!(left).multiplication(&evaluate!(right)),
+            NodeBase::Division       (left, right) => evaluate!(left).division(&evaluate!(right)),
+            NodeBase::Power          (left, right) => evaluate!(left).power(&evaluate!(right)),
 
-            NodeBase::AbsoluteValue       (arg)  => arg.evaluate(variables).absolute_value(),
-            NodeBase::SquareRoot          (arg)  => arg.evaluate(variables).square_root(),
-            NodeBase::NthRoot             (n, p) => p.evaluate(variables).nth_root(&n.evaluate(variables)),
-            NodeBase::Sine                (arg)  => arg.evaluate(variables).sine(),
-            NodeBase::Cosine              (arg)  => arg.evaluate(variables).cosine(),
-            NodeBase::Tangent             (arg)  => arg.evaluate(variables).tangent(),
-            NodeBase::Cosecant            (arg)  => arg.evaluate(variables).cosecant(),
-            NodeBase::Secant              (arg)  => arg.evaluate(variables).secant(),
-            NodeBase::Cotangent           (arg)  => arg.evaluate(variables).cotangent(),
-            NodeBase::InverseSine         (arg)  => arg.evaluate(variables).inverse_sine(),
-            NodeBase::InverseCosine       (arg)  => arg.evaluate(variables).inverse_cosine(),
-            NodeBase::InverseTangent      (arg)  => arg.evaluate(variables).inverse_tangent(),
-            NodeBase::InverseCosecant     (arg)  => arg.evaluate(variables).inverse_cosecant(),
-            NodeBase::InverseSecant       (arg)  => arg.evaluate(variables).inverse_secant(),
-            NodeBase::InverseCotangent    (arg)  => arg.evaluate(variables).inverse_cotangent(),
-            NodeBase::HyperbolicSine      (arg)  => arg.evaluate(variables).hyperbolic_sine(),
-            NodeBase::HyperbolicCosine    (arg)  => arg.evaluate(variables).hyperbolic_cosine(),
-            NodeBase::HyperbolicTangent   (arg)  => arg.evaluate(variables).hyperbolic_tangent(),
-            NodeBase::HyperbolicCosecant  (arg)  => arg.evaluate(variables).hyperbolic_cosecant(),
-            NodeBase::HyperbolicSecant    (arg)  => arg.evaluate(variables).hyperbolic_secant(),
-            NodeBase::HyperbolicCotangent (arg)  => arg.evaluate(variables).hyperbolic_cotangent(),
-            NodeBase::Exponential         (arg)  => arg.evaluate(variables).exponential(),
-            NodeBase::NaturalLogarithm    (arg)  => arg.evaluate(variables).natural_logarithm(),
-            NodeBase::Logartithm          (b, r) => r.evaluate(variables).logarithm(&b.evaluate(variables)),
-            NodeBase::Modulo              (a, b) => a.evaluate(variables).modulo(&b.evaluate(variables)),
-            NodeBase::Ceiling             (arg)  => arg.evaluate(variables).ceiling(),
-            NodeBase::Floor               (arg)  => arg.evaluate(variables).floor(),
-            NodeBase::Round               (arg)  => arg.evaluate(variables).round(),
-            NodeBase::Sign                (arg)  => arg.evaluate(variables).sign(),
+            NodeBase::AbsoluteValue       (arg)  => evaluate!(arg).absolute_value(),
+            NodeBase::SquareRoot          (arg)  => evaluate!(arg).square_root(),
+            NodeBase::NthRoot             (n, p) => evaluate!(p).nth_root(&evaluate!(n)),
+            NodeBase::Sine                (arg)  => evaluate!(arg).sine(),
+            NodeBase::Cosine              (arg)  => evaluate!(arg).cosine(),
+            NodeBase::Tangent             (arg)  => evaluate!(arg).tangent(),
+            NodeBase::Cosecant            (arg)  => evaluate!(arg).cosecant(),
+            NodeBase::Secant              (arg)  => evaluate!(arg).secant(),
+            NodeBase::Cotangent           (arg)  => evaluate!(arg).cotangent(),
+            NodeBase::InverseSine         (arg)  => evaluate!(arg).inverse_sine(),
+            NodeBase::InverseCosine       (arg)  => evaluate!(arg).inverse_cosine(),
+            NodeBase::InverseTangent      (arg)  => evaluate!(arg).inverse_tangent(),
+            NodeBase::InverseCosecant     (arg)  => evaluate!(arg).inverse_cosecant(),
+            NodeBase::InverseSecant       (arg)  => evaluate!(arg).inverse_secant(),
+            NodeBase::InverseCotangent    (arg)  => evaluate!(arg).inverse_cotangent(),
+            NodeBase::HyperbolicSine      (arg)  => evaluate!(arg).hyperbolic_sine(),
+            NodeBase::HyperbolicCosine    (arg)  => evaluate!(arg).hyperbolic_cosine(),
+            NodeBase::HyperbolicTangent   (arg)  => evaluate!(arg).hyperbolic_tangent(),
+            NodeBase::HyperbolicCosecant  (arg)  => evaluate!(arg).hyperbolic_cosecant(),
+            NodeBase::HyperbolicSecant    (arg)  => evaluate!(arg).hyperbolic_secant(),
+            NodeBase::HyperbolicCotangent (arg)  => evaluate!(arg).hyperbolic_cotangent(),
+            NodeBase::Exponential         (arg)  => evaluate!(arg).exponential(),
+            NodeBase::NaturalLogarithm    (arg)  => evaluate!(arg).natural_logarithm(),
+            NodeBase::Logartithm          (b, r) => evaluate!(r).logarithm(&evaluate!(b)),
+            NodeBase::Modulo              (a, b) => evaluate!(a).modulo(&evaluate!(b)),
+            NodeBase::Ceiling             (arg)  => evaluate!(arg).ceiling(),
+            NodeBase::Floor               (arg)  => evaluate!(arg).floor(),
+            NodeBase::Round               (arg)  => evaluate!(arg).round(),
+            NodeBase::Sign                (arg)  => evaluate!(arg).sign(),
 
             NodeBase::MultiValue        (values)      => {
                 let mut evaluated_values = EvaluatedValues::new();
                 for i in 0..values.len() {
-                    evaluated_values = evaluated_values.add(&values[i].evaluate(variables));
+                    evaluated_values = evaluated_values.add(&evaluate!(&values[i]));
                 }
                 evaluated_values
             },
@@ -186,7 +191,7 @@ impl NodeBase {
             NodeBase::Equals (left, right) => {
                 match (&left.base) {
                     NodeBase::Variable(name) => {
-                        let values = right.evaluate(variables);
+                        let values = evaluate!(right);
                         variables.insert(String::from(name), values);
                     },
                     _ => ()

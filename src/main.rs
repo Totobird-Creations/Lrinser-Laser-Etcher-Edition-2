@@ -1,4 +1,5 @@
 #![allow(unused_parens)]
+#![feature(decl_macro)]
 
 
 use static_init::dynamic;
@@ -48,7 +49,7 @@ fn main() {
     log!(INFO, "Initialised.");
     log!(INFO, "Reading equations from {}.", "<null>");
 
-    let eq0 = *Node::new(NodeBase::Equals(
+    /*let eq0 = *Node::new(NodeBase::Equals(
         Node::new(NodeBase::Addition(
             Node::new(NodeBase::Power(
                 Node::new(NodeBase::Variable(String::from("x"))),
@@ -63,7 +64,7 @@ fn main() {
             Node::new(NodeBase::Number(2.5)),
             Node::new(NodeBase::Number(2.0))
         ))
-    ));
+    ));*/
     /*let eq1 = *Node::new(NodeBase::Equals(
         Node::new(NodeBase::Variable(String::from("y"))),
         Node::new(NodeBase::SquareRoot(
@@ -79,12 +80,24 @@ fn main() {
             ))
         ))
     ));*/
+    let eq0 = *Node::new(NodeBase::Equals(
+        Node::new(NodeBase::Variable(String::from("y"))),
+        Node::new(NodeBase::Addition(
+            Node::new(NodeBase::Sine(
+                Node::new(NodeBase::Variable(String::from("x")))
+            )),
+            Node::new(NodeBase::Multiplication(
+                Node::new(NodeBase::Variable(String::from("x"))),
+                Node::new(NodeBase::Number(0.0))
+            ))
+        ))
+    ));
     let equations = vec![eq0];
     log!(DEBUG, "Loaded {} equation{}.", equations.len(), if (equations.len() == 1) {""} else {"s"});
 
     let settings = RenderSettings {
         frame: [-5.0, -5.0, 5.0, 5.0],
-        split_depth: 10,
+        split_depth: 8,
         resolution: [0, 0],
         target: String::from("target.png"),
     };
